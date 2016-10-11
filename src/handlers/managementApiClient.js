@@ -2,7 +2,7 @@ const tools = require('auth0-extension-tools');
 const Boom = require('boom');
 
 module.exports = function(options) {
-  if (!options || typeof options != 'object') {
+  if (!options || typeof options !== 'object') {
     throw new tools.ArgumentError('Must provide the options');
   }
 
@@ -22,7 +22,7 @@ module.exports = function(options) {
     method: function(req, res) {
       tools.managementApi.getClient(options)
         .then(function(auth0) {
-          res(auth0)
+          res(auth0);
         })
         .catch(function(err) {
           if (options.logger && typeof options.logger === 'function') {
@@ -33,5 +33,5 @@ module.exports = function(options) {
         });
     },
     assign: 'auth0'
-  }
+  };
 };

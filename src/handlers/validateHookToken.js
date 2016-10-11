@@ -51,6 +51,6 @@ module.exports = function(domain, webtaskUrl, extensionSecret) {
 
         return res(Boom.unauthorized(new tools.HookTokenError('Hook token missing for the call to: ' + hookPath)));
       }
-    }
+    };
   };
 };

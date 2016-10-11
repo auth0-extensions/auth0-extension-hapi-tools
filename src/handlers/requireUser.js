@@ -2,7 +2,7 @@ const tools = require('auth0-extension-tools');
 const Boom = require('boom');
 
 module.exports = function(options) {
-  if (!options || typeof options != 'object') {
+  if (!options || typeof options !== 'object') {
     throw new tools.ArgumentError('Must provide the options');
   }
 
@@ -14,5 +14,5 @@ module.exports = function(options) {
 
       return res();
     }
-  }
+  };
 };
