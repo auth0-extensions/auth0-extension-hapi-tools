@@ -7,11 +7,11 @@ module.exports = function(options) {
   }
 
   if (typeof options.domain !== 'string' || options.domain.length === 0) {
-    throw new tools.ArgumentError('The provided domain is invalid: ' + domain);
+    throw new tools.ArgumentError('The provided domain is invalid: ' + options.domain);
   }
 
   if (typeof options.clientId !== 'string' || options.clientId.length === 0) {
-    throw new tools.ArgumentError('The provided clientId is invalid: ' + clientId);
+    throw new tools.ArgumentError('The provided clientId is invalid: ' + options.clientId);
   }
 
   if (typeof options.clientSecret !== 'string' || options.clientSecret.length === 0) {
