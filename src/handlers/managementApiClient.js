@@ -10,14 +10,6 @@ module.exports = function(options) {
     throw new tools.ArgumentError('The provided domain is invalid: ' + options.domain);
   }
 
-  if (typeof options.clientId !== 'string' || options.clientId.length === 0) {
-    throw new tools.ArgumentError('The provided clientId is invalid: ' + options.clientId);
-  }
-
-  if (typeof options.clientSecret !== 'string' || options.clientSecret.length === 0) {
-    throw new tools.ArgumentError('The provided clientSecret is invalid');
-  }
-
   return {
     method: function(req, res) {
       tools.managementApi.getClient(options)
