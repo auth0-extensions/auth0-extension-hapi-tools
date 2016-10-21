@@ -21,7 +21,7 @@ module.exports.getBaseUrl = function(req) {
   const originalUrl = url.parse(req.originalUrl || '').pathname || '';
   return url.format({
     protocol: process.env.NODE_ENV !== 'production' ? 'http' : 'https',
-    host: req.get('host'),
+    host: req.headers.host,
     pathname: originalUrl.replace(req.path, '')
   });
 };
