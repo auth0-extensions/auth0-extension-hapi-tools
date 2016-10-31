@@ -18,6 +18,9 @@ module.exports.urlHelpers = urlHelpers;
  */
 module.exports.handlers = handlers;
 
+/*
+ * Plugins
+ */
 module.exports.plugins = {
   dashboardAdminSession: dashboardAdminSession
 };

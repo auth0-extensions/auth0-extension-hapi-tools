@@ -68,7 +68,7 @@ module.exports.register = function(server, options, next) {
     config: {
       auth: false
     },
-    handler: (req, reply) => {
+    handler: function(req, reply) {
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       reply.redirect(sessionManager.createAuthorizeUrl({
         redirectUri: urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback',
@@ -84,7 +84,7 @@ module.exports.register = function(server, options, next) {
     config: {
       auth: false
     },
-    handler: (req, reply) => {
+    handler: function(req, reply) {
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
@@ -112,7 +112,7 @@ module.exports.register = function(server, options, next) {
     config: {
       auth: false
     },
-    handler: (req, reply) => {
+    handler: function(req, reply) {
       const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req));
       reply(`<html>
         <head>
@@ -130,7 +130,7 @@ module.exports.register = function(server, options, next) {
     config: {
       auth: false
     },
-    handler: (req, reply) => {
+    handler: function(req, reply) {
       reply({
         redirect_uris: [ urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback' ],
         client_name: options.clientName,
