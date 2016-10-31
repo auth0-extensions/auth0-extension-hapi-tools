@@ -92,13 +92,13 @@ module.exports.register = function(server, options, next) {
         issuer: options.baseUrl,
         audience: options.audience
       }).then(function(token) {
-        reply(`<html>
-          <head>
-            <script type="text/javascript">
-              sessionStorage.setItem('${sessionStorageKey}', '${token}');
-              window.location.href = '${urlHelpers.getBaseUrl(req)}';
-            </script>
-        </html>`);
+        reply('<html>' +
+          '<head>' +
+            '<script type="text/javascript">' +
+              'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
+              'window.location.href = "' + urlHelpers.getBaseUrl(req) + '";' +
+            '</script>' +
+        '</html>');
       })
       .catch(function(err) {
         server.log([ 'error' ], 'Login callback failed', err);
@@ -115,13 +115,13 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req));
-      reply(`<html>
-        <head>
-          <script type="text/javascript">
-            sessionStorage.removeItem('authz:apiToken');
-            window.location.href = 'https://${options.rta}/v2/logout/?returnTo=${encodedBaseUrl}&client_id=${encodedBaseUrl}';
-          </script>
-      </html>`);
+      reply('<html>' +
+        '<head>' +
+          '<script type="text/javascript">' +
+            'sessionStorage.removeItem("' + sessionStorageKey + '");' +
+            'window.location.href = "https://"' + options.rta + '"/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
+          '</script>' +
+      '</html>');
     }
   });
 
