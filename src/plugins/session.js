@@ -60,7 +60,8 @@ module.exports.register = function(server, options, next) {
     return next(new tools.ArgumentError('The provided client name is invalid: ' + options.clientName));
   }
 
-  const urlPrefix = (options.urlPrefix == null || options.urlPrefix === undefined) ? '' : options.urlPrefix;
+  const sessionStorageKey = options.sessionStorageKey || 'apiToken';
+  const urlPrefix = options.urlPrefix || '';
 
   server.route({
     method: 'GET',
@@ -94,7 +95,7 @@ module.exports.register = function(server, options, next) {
         reply(`<html>
           <head>
             <script type="text/javascript">
-              sessionStorage.setItem('authz:apiToken', '${token}');
+              sessionStorage.setItem('${sessionStorageKey}', '${token}');
               window.location.href = '${urlHelpers.getBaseUrl(req)}';
             </script>
         </html>`);
