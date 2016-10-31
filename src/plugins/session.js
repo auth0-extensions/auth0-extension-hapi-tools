@@ -1,6 +1,6 @@
-const jwt = require('hapi-auth-jwt2');
-const tools = require('auth0-extension-tools');
 const Boom = require('boom');
+const tools = require('auth0-extension-tools');
+
 const urlHelpers = require('../urlHelpers');
 
 module.exports.register = function(server, options, next) {
@@ -44,6 +44,14 @@ module.exports.register = function(server, options, next) {
     return next(new tools.ArgumentError('The provided domain is invalid: ' + options.domain));
   }
 
+  if (options.baseUrl === null || options.baseUrl === undefined) {
+    return next(new tools.ArgumentError('Must provide a valid base URL'));
+  }
+
+  if (typeof options.baseUrl !== 'string' || options.baseUrl.length === 0) {
+    return next(new tools.ArgumentError('The provided base URL is invalid: ' + options.baseUrl));
+  }
+
   if (options.clientName === null || options.clientName === undefined) {
     return next(new tools.ArgumentError('Must provide a valid client name'));
   }
@@ -52,16 +60,18 @@ module.exports.register = function(server, options, next) {
     return next(new tools.ArgumentError('The provided client name is invalid: ' + options.clientName));
   }
 
+  const urlPrefix = (options.urlPrefix == null || options.urlPrefix === undefined) ? '' : options.urlPrefix;
+
   server.route({
     method: 'GET',
-    path: '/login',
+    path: urlPrefix + '/login',
     config: {
       auth: false
     },
     handler: (req, reply) => {
-      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.clientId || urlHelpers.getBaseUrl(req));
+      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       reply.redirect(sessionManager.createAuthorizeUrl({
-        redirectUri: urlHelpers.getBaseUrl(req) + '/login/callback',
+        redirectUri: urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback',
         scopes: options.scopes,
         expiration: options.expiration
       }));
@@ -70,23 +80,47 @@ module.exports.register = function(server, options, next) {
 
   server.route({
     method: 'POST',
-    path: '/login/callback',
+    path: urlPrefix + '/login/callback',
     config: {
       auth: false
     },
     handler: (req, reply) => {
-      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.clientId || urlHelpers.getBaseUrl(req));
+      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
-        issuer: urlHelpers.getBaseUrl(req),
+        issuer: options.baseUrl,
         audience: options.audience
       }).then(function(token) {
-        reply.redirect(urlHelpers.getBaseUrl(req) + '#api_token=' + token);
+        reply(`<html>
+          <head>
+            <script type="text/javascript">
+              sessionStorage.setItem('authz:apiToken', '${token}');
+              window.location.href = '${urlHelpers.getBaseUrl(req)}';
+            </script>
+        </html>`);
       })
       .catch(function(err) {
         server.log([ 'error' ], 'Login callback failed', err);
         reply(Boom.wrap(err));
       });
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: urlPrefix + '/logout',
+    config: {
+      auth: false
+    },
+    handler: (req, reply) => {
+      const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req));
+      reply(`<html>
+        <head>
+          <script type="text/javascript">
+            sessionStorage.removeItem('authz:apiToken');
+            window.location.href = 'https://${options.rta}/v2/logout/?returnTo=${encodedBaseUrl}&client_id=${encodedBaseUrl}';
+          </script>
+      </html>`);
     }
   });
 
@@ -98,29 +132,21 @@ module.exports.register = function(server, options, next) {
     },
     handler: (req, reply) => {
       reply({
-        redirect_uris: [ urlHelpers.getBaseUrl(req) + '/login/callback' ],
+        redirect_uris: [ urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback' ],
         client_name: options.clientName,
         post_logout_redirect_uris: [ urlHelpers.getBaseUrl(req) ]
       });
     }
   });
 
-  server.register(jwt, (err) => {
-    if (err) {
-      next(err);
+  server.auth.strategy('auth0-admins-jwt', 'jwt', {
+    key: options.secret,
+    validateFunc: options.onLoginSuccess,
+    verifyOptions: {
+      audience: options.audience,
+      issuer: options.baseUrl,
+      algorithms: [ 'HS256' ]
     }
-
-    server.auth.strategy('jwt', 'jwt', {
-      key: options.secret,
-      validateFunc: options.onLoginSuccess,
-
-      // Validate the audience and the issuer.
-      verifyOptions: {
-        audience: options.audience,
-        issuer: options.clientId,
-        algorithms: [ 'HS256' ]
-      }
-    });
   });
 
   return next();
