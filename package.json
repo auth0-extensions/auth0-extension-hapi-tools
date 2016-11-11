@@ -1,17 +1,17 @@
 {
   "name": "auth0-extension-hapi-tools",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A set of tools and utilities to simplify the development of Auth0 Extensions with Hapi.",
   "main": "src/index.js",
   "dependencies": {
-    "auth0-extension-tools": "^0.16.0",
+    "auth0-extension-tools": "^1.0.0",
     "boom": "3.2.2",
     "hapi-auth-jwt2": "7.0.1",
     "webtask-tools": "^3.1.1"
   },
   "devDependencies": {
     "autochecker": "^0.9.2",
-    "eslint": "^3.9.0",
+    "eslint": "^3.9.1",
     "eslint-config-auth0": "^6.0.1",
     "eslint-plugin-babel": "^3.3.0",
     "eslint-plugin-import": "^2.2.0",
