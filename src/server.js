@@ -18,6 +18,7 @@ function fromHapi(serverFactory) {
       hapiServer.ext('onRequest', function(hapiRequest, reply) {
         var normalizeRouteRx = createRouteNormalizationRx(hapiRequest.raw.req.x_wt);
         if (normalizeRouteRx) {
+          hapiRequest.originalUrl = hapiRequest.url.path;
           hapiRequest.setUrl(hapiRequest.url.path.replace(normalizeRouteRx, '/'));
         }
 
