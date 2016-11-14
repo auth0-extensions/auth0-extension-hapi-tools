@@ -96,7 +96,7 @@ module.exports.register = function(server, options, next) {
           '<head>' +
             '<script type="text/javascript">' +
               'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
-              'window.location.href = "' + urlHelpers.getBaseUrl(req) + '";' +
+              'window.location.href = "' + urlHelpers.getBaseUrl(req) + '/";' +
             '</script>' +
         '</html>');
       })
@@ -114,12 +114,12 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req));
+      const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req) + '/');
       reply('<html>' +
         '<head>' +
           '<script type="text/javascript">' +
             'sessionStorage.removeItem("' + sessionStorageKey + '");' +
-            'window.location.href = "https://"' + options.rta + '"/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
+            'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
           '</script>' +
       '</html>');
     }
