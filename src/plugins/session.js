@@ -4,7 +4,7 @@ const tools = require('auth0-extension-tools');
 
 const urlHelpers = require('../urlHelpers');
 
-const buildUrl = (paths) => {
+const buildUrl = function(paths) {
   return path.join.apply(null, paths)
     .replace('http:/', 'http://')
     .replace('https:/', 'https://');
