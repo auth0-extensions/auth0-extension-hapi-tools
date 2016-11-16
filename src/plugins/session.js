@@ -1,7 +1,14 @@
 const Boom = require('boom');
+const path = require('path');
 const tools = require('auth0-extension-tools');
 
 const urlHelpers = require('../urlHelpers');
+
+const buildUrl = (paths) => {
+  return path.join.apply(null, paths)
+    .replace('http:/', 'http://')
+    .replace('https:/', 'https://');
+};
 
 module.exports.register = function(server, options, next) {
   if (!options || typeof options !== 'object') {
@@ -72,7 +79,7 @@ module.exports.register = function(server, options, next) {
     handler: function(req, reply) {
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       reply.redirect(sessionManager.createAuthorizeUrl({
-        redirectUri: urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback',
+        redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
         scopes: options.scopes,
         expiration: options.expiration
       }));
@@ -96,7 +103,7 @@ module.exports.register = function(server, options, next) {
           '<head>' +
             '<script type="text/javascript">' +
               'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
-              'window.location.href = "' + urlHelpers.getBaseUrl(req) + '/";' +
+              'window.location.href = "' + buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) + '";' +
             '</script>' +
         '</html>');
       })
@@ -114,7 +121,7 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      const encodedBaseUrl = encodeURIComponent(urlHelpers.getBaseUrl(req) + '/');
+      const encodedBaseUrl = encodeURIComponent(buildUrl([ urlHelpers.getBaseUrl(req), '/' ]));
       reply('<html>' +
         '<head>' +
           '<script type="text/javascript">' +
@@ -133,9 +140,9 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       reply({
-        redirect_uris: [ urlHelpers.getBaseUrl(req) + urlPrefix + '/login/callback' ],
+        redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]) ],
         client_name: options.clientName,
-        post_logout_redirect_uris: [ urlHelpers.getBaseUrl(req) ]
+        post_logout_redirect_uris: buildUrl([ urlHelpers.getBaseUrl(req), '/' ])
       });
     }
   });

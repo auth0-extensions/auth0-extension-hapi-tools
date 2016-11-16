@@ -1,6 +1,6 @@
 {
   "name": "auth0-extension-hapi-tools",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "description": "A set of tools and utilities to simplify the development of Auth0 Extensions with Hapi.",
   "main": "src/index.js",
   "dependencies": {
@@ -24,9 +24,9 @@
   },
   "scripts": {
     "release": "git tag $npm_package_version && git push --tags && npm publish",
-    "test": "tape tests/**/*.js | faucet",
+    "test": "tape tests/*.js tests/**/*.js",
     "test:docker": "autochecker 4.4.5 6.3.1",
-    "test:coverage": "nyc tape tests/**/*.js | faucet && nyc report",
+    "test:coverage": "nyc tape tests/*.js tests/**/*.js | faucet && nyc report",
     "lint:js": "eslint --ignore-path .gitignore ."
   },
   "repository": {

@@ -22,6 +22,6 @@ module.exports.getBaseUrl = function(req) {
   return url.format({
     protocol: process.env.NODE_ENV !== 'production' ? 'http' : 'https',
     host: req.headers.host,
-    pathname: originalUrl.replace(req.path, '')
+    pathname: originalUrl.replace(req.path, '').replace(/\/$/g, '')
   });
 };

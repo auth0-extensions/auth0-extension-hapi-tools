@@ -2,8 +2,12 @@ const tape = require('tape');
 
 const urlHelpers = require('../src/urlHelpers');
 
+
 tape('urlHelpers#getBasePath should return the base path of the request', function(t) {
   const req = {
+    headers: {
+      host: 'sandbox.it.auth0.com'
+    },
     originalUrl: 'https://sandbox.it.auth0.com/api/run/mytenant/abc',
     path: '/users'
   };
@@ -14,6 +18,9 @@ tape('urlHelpers#getBasePath should return the base path of the request', functi
 
 tape('urlHelpers#getBasePath should return slash if not running in webtask', function(t) {
   const req = {
+    headers: {
+      host: 'sandbox.it.auth0.com'
+    },
     path: '/users'
   };
 
@@ -23,6 +30,9 @@ tape('urlHelpers#getBasePath should return slash if not running in webtask', fun
 
 tape('urlHelpers#getBaseUrl should return the base path of the request', function(t) {
   const req = {
+    headers: {
+      host: 'sandbox.it.auth0.com'
+    },
     originalUrl: 'https://sandbox.it.auth0.com/api/run/mytenant/abc',
     path: '/users',
     get: function() {
@@ -36,6 +46,9 @@ tape('urlHelpers#getBaseUrl should return the base path of the request', functio
 
 tape('urlHelpers#getBaseUrl should return slash if not running in webtask', function(t) {
   const req = {
+    headers: {
+      host: 'sandbox.it.auth0.com'
+    },
     path: '/users',
     get: function() {
       return 'sandbox.it.auth0.com';
