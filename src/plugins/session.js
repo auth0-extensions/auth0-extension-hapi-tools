@@ -69,9 +69,9 @@ module.exports.register = function(server, options, next) {
     return next(new tools.ArgumentError('The provided client name is invalid: ' + options.clientName));
   }
 
-  const sessionStorageKey = options.sessionStorageKey || 'apiToken';
-  const statePrefix = options.statePrefix || 'state';
+  const stateKey = options.stateKey || 'state';
   const urlPrefix = options.urlPrefix || '';
+  const sessionStorageKey = options.sessionStorageKey || 'apiToken';
 
   server.route({
     method: 'GET',
@@ -83,11 +83,12 @@ module.exports.register = function(server, options, next) {
       const state = crypto.randomBytes(16).toString('hex');
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       const redirectTo = sessionManager.createAuthorizeUrl({
-          redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
-          scopes: options.scopes,
-          expiration: options.expiration
-        }) + '&state=' + state;
-      reply.redirect(redirectTo).state(statePrefix, state);
+        redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
+        scopes: options.scopes,
+        expiration: options.expiration
+      });
+      reply.redirect(redirectTo + '&state=' + state)
+        .state(stateKey, state);
     }
   });
 
@@ -98,7 +99,7 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      if (req.state[statePrefix] !== req.payload.state) {
+      if (req.state[stateKey] !== req.payload.state) {
         return reply(Boom.badRequest('State mismatch'));
       }
 
