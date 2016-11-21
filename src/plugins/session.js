@@ -1,11 +1,13 @@
 const Boom = require('boom');
 const path = require('path');
+const crypto = require('crypto');
 const tools = require('auth0-extension-tools');
 
 const urlHelpers = require('../urlHelpers');
 
 const buildUrl = function(paths) {
   return path.join.apply(null, paths)
+    .replace(/\\/g, '/')
     .replace('http:/', 'http://')
     .replace('https:/', 'https://');
 };
@@ -68,6 +70,7 @@ module.exports.register = function(server, options, next) {
   }
 
   const sessionStorageKey = options.sessionStorageKey || 'apiToken';
+  const statePrefix = options.statePrefix || 'state';
   const urlPrefix = options.urlPrefix || '';
 
   server.route({
@@ -77,12 +80,14 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
+      const state = crypto.randomBytes(16).toString('hex');
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
-      reply.redirect(sessionManager.createAuthorizeUrl({
-        redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
-        scopes: options.scopes,
-        expiration: options.expiration
-      }));
+      const redirectTo = sessionManager.createAuthorizeUrl({
+          redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
+          scopes: options.scopes,
+          expiration: options.expiration
+        }) + '&state=' + state;
+      reply.redirect(redirectTo).state(statePrefix, state);
     }
   });
 
@@ -93,6 +98,10 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
+      if (req.state[statePrefix] !== req.payload.state) {
+        return reply(Boom.badRequest('State mismatch'));
+      }
+
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
@@ -105,6 +114,7 @@ module.exports.register = function(server, options, next) {
               'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
               'window.location.href = "' + buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) + '";' +
             '</script>' +
+          '</head>' +
         '</html>');
       })
       .catch(function(err) {
@@ -128,6 +138,7 @@ module.exports.register = function(server, options, next) {
             'sessionStorage.removeItem("' + sessionStorageKey + '");' +
             'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
           '</script>' +
+        '</head>' +
       '</html>');
     }
   });
