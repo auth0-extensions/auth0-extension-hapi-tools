@@ -24,7 +24,7 @@
   },
   "scripts": {
     "release": "git tag $npm_package_version && git push --tags && npm publish",
-    "test": "tape tests/*.js tests/**/*.js",
+    "test": "tape tests/*.js tests/**/*.js | faucet",
     "test:docker": "autochecker 4.4.5 6.3.1",
     "test:coverage": "nyc tape tests/*.js tests/**/*.js | faucet && nyc report",
     "lint:js": "eslint --ignore-path .gitignore ."
