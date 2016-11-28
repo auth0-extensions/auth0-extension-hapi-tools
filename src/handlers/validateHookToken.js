@@ -45,11 +45,12 @@ module.exports = function(domain, webtaskUrl, extensionSecret) {
               return res();
             }
           } catch (e) {
-            return res(Boom.unauthorized(e));
+            return res(Boom.wrap(e, 401, e.message));
           }
         }
 
-        return res(Boom.unauthorized(new tools.HookTokenError('Hook token missing for the call to: ' + hookPath)));
+        const err = new tools.HookTokenError(`Hook token missing for the call to: ${hookPath}`);
+        return res(Boom.wrap(err, 401, err.message));
       }
     };
   };
