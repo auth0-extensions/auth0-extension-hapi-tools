@@ -39,4 +39,7 @@ const basePath = urlHelpers.getBasePath(req);
 
 // Eg: http://sandbox.it.auth0.com/api/run/mytenant/abc
 const baseUrl = urlHelpers.getBaseUrl(req);
+
+// Eg: http://tenant.us.webtask.io/abc
+const webtaskUrl = urlHelpers.getWebtaskUrl(req);
 ```
