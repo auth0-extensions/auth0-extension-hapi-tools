@@ -1,5 +1,5 @@
 {
-  "extends": "auth0",
+  "extends": "auth0-base",
   "ecmaFeatures": {
     "modules": true
   },

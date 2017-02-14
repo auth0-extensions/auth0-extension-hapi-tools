@@ -1,3 +1,5 @@
+const Boom = require('boom');
+const Request = require('request');
 const tools = require('auth0-extension-tools');
 
 module.exports.createServer = function(cb) {
@@ -57,9 +59,8 @@ function createRouteNormalizationRx(claims) {
     return new RegExp('^\/' + container + '/(?:' + name + '\/?)?');
   } else if (claims.url_format === USE_WILDCARD_DOMAIN) {
     return new RegExp('^\/(?:' + name + '\/?)?');
-  } else {
-    throw new Error('Unsupported webtask URL format.');
   }
+  throw new Error('Unsupported webtask URL format.');
 }
 
 function attachStorageHelpers(context) {
@@ -74,8 +75,6 @@ function attachStorageHelpers(context) {
 
 
   function readNotAvailable(path, options, cb) {
-    var Boom = require('boom');
-
     if (typeof options === 'function') {
       cb = options;
       options = {};
@@ -85,9 +84,6 @@ function attachStorageHelpers(context) {
   }
 
   function readFromPath(path, options, cb) {
-    var Boom = require('boom');
-    var Request = require('request');
-
     if (typeof options === 'function') {
       cb = options;
       options = {};
@@ -109,8 +105,6 @@ function attachStorageHelpers(context) {
   }
 
   function writeNotAvailable(path, data, options, cb) {
-    var Boom = require('boom');
-
     if (typeof options === 'function') {
       cb = options;
       options = {};
@@ -120,9 +114,6 @@ function attachStorageHelpers(context) {
   }
 
   function writeToPath(path, data, options, cb) {
-    var Boom = require('boom');
-    var Request = require('request');
-
     if (typeof options === 'function') {
       cb = options;
       options = {};
