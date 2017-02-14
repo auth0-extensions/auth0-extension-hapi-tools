@@ -104,7 +104,7 @@ module.exports.register = function(server, options, next) {
       }
 
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
-      sessionManager.create(req.payload.id_token, req.payload.access_token, {
+      return sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
         issuer: options.baseUrl,
         audience: options.audience
@@ -154,7 +154,7 @@ module.exports.register = function(server, options, next) {
       reply({
         redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]) ],
         client_name: options.clientName,
-        post_logout_redirect_uris: buildUrl([ urlHelpers.getBaseUrl(req), '/' ])
+        post_logout_redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) ]
       });
     }
   });
