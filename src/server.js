@@ -22,6 +22,11 @@ function fromHapi(serverFactory) {
           hapiRequest.setUrl(hapiRequest.url.path.replace(normalizeRouteRx, '/'));
         }
 
+        /* Fix multi-proto environments, take the first */
+        if (hapiRequest.headers['x-forwarded-proto'] ) {
+          hapiRequest.headers['x-forwarded-proto'] = hapiRequest.headers['x-forwarded-proto'].split(',').shift();
+        }
+
         hapiRequest.webtaskContext = webtaskContext;
         return reply.continue();
       });
