@@ -25,10 +25,10 @@
   },
   "scripts": {
     "release": "git tag $npm_package_version && git push --tags && npm publish",
+    "lint:js": "eslint --ignore-path .gitignore .",
     "test": "tape tests/*.js tests/**/*.js | faucet",
     "test:docker": "autochecker 4.4.5 6.3.1",
-    "test:coverage": "nyc tape tests/*.js tests/**/*.js | faucet && nyc report",
-    "lint:js": "eslint --ignore-path .gitignore ."
+    "test:coverage": "nyc tape tests/*.js tests/**/*.js | faucet && nyc report"
   },
   "repository": {
     "type": "git",
