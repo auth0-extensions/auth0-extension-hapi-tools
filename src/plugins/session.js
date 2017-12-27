@@ -116,7 +116,7 @@ module.exports.register = function(server, options, next) {
         decoded = null;
       }
 
-      if (!decoded || !req.state[nonceKey] !== decoded.nonce) {
+      if (!decoded || req.state[nonceKey] !== decoded.nonce) {
         return reply(Boom.badRequest('Nonce mismatch'));
       }
 
