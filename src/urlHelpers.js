@@ -51,7 +51,7 @@ function createRouteNormalizationRx(claims) {
   throw new Error('Unsupported webtask URL format.');
 }
 
-module.exports.getWebtaskUrl = (req) => {
+module.exports.getWebtaskUrl = (req) = function(req) {
   const normalizeRouteRx = createRouteNormalizationRx(req.x_wt);
   const requestOriginalUrl = req.url;
   const requestUrl = req.url.replace(normalizeRouteRx, '/');
