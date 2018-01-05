@@ -1,6 +1,7 @@
 const Boom = require('boom');
 const path = require('path');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const tools = require('auth0-extension-tools');
 
 const urlHelpers = require('../urlHelpers');
@@ -30,7 +31,7 @@ module.exports.register = function(server, options, next) {
   }
 
   if (options.audience === null || options.audience === undefined) {
-    return next(new tools.ArgumentError('Must provide a valid secret'));
+    return next(new tools.ArgumentError('Must provide a valid audience'));
   }
 
   if (typeof options.audience !== 'string' || options.audience.length === 0) {
@@ -70,6 +71,7 @@ module.exports.register = function(server, options, next) {
   }
 
   const stateKey = options.stateKey || 'state';
+  const nonceKey = options.nonceKey || 'nonce';
   const urlPrefix = options.urlPrefix || '';
   const sessionStorageKey = options.sessionStorageKey || 'apiToken';
 
@@ -81,14 +83,17 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       const state = crypto.randomBytes(16).toString('hex');
+      const nonce = crypto.randomBytes(16).toString('hex');
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       const redirectTo = sessionManager.createAuthorizeUrl({
         redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
         scopes: options.scopes,
-        expiration: options.expiration
+        expiration: options.expiration,
+        nonce: nonce
       });
       reply.redirect(redirectTo + '&state=' + state)
-        .state(stateKey, state);
+        .state(stateKey, state)
+        .state(nonceKey, nonce);
     }
   });
 
@@ -101,6 +106,18 @@ module.exports.register = function(server, options, next) {
     handler: function(req, reply) {
       if (req.state[stateKey] !== req.payload.state) {
         return reply(Boom.badRequest('State mismatch'));
+      }
+
+      var decoded;
+
+      try {
+        decoded = jwt.decode(req.payload.id_token);
+      } catch (e) {
+        decoded = null;
+      }
+
+      if (!decoded || req.state[nonceKey] !== decoded.nonce) {
+        return reply(Boom.badRequest('Nonce mismatch'));
       }
 
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
