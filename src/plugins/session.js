@@ -1,6 +1,7 @@
 const Boom = require('boom');
 const path = require('path');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const tools = require('auth0-extension-tools');
 
 const urlHelpers = require('../urlHelpers');
@@ -30,7 +31,7 @@ module.exports.register = function(server, options, next) {
   }
 
   if (options.audience === null || options.audience === undefined) {
-    return next(new tools.ArgumentError('Must provide a valid secret'));
+    return next(new tools.ArgumentError('Must provide a valid audience'));
   }
 
   if (typeof options.audience !== 'string' || options.audience.length === 0) {
@@ -70,6 +71,7 @@ module.exports.register = function(server, options, next) {
   }
 
   const stateKey = options.stateKey || 'state';
+  const nonceKey = options.nonceKey || 'nonce';
   const urlPrefix = options.urlPrefix || '';
   const sessionStorageKey = options.sessionStorageKey || 'apiToken';
 
@@ -81,13 +83,17 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       const state = crypto.randomBytes(16).toString('hex');
+      const nonce = crypto.randomBytes(16).toString('hex');
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       const redirectTo = sessionManager.createAuthorizeUrl({
-        redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
+        redirectUri: buildUrl([urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback']),
         scopes: options.scopes,
-        expiration: options.expiration
+        expiration: options.expiration,
+        nonce: nonce,
+        state: state
       });
-      reply.redirect(redirectTo + '&state=' + state)
+      reply.redirect(redirectTo)
+        .state(nonceKey, nonce)
         .state(stateKey, state);
     }
   });
@@ -103,6 +109,18 @@ module.exports.register = function(server, options, next) {
         return reply(Boom.badRequest('State mismatch'));
       }
 
+      var decoded;
+
+      try {
+        decoded = jwt.decode(req.payload.id_token);
+      } catch (e) {
+        decoded = null;
+      }
+
+      if (!decoded || req.state[nonceKey] !== decoded.nonce) {
+        return reply(Boom.badRequest('Nonce mismatch'));
+      }
+
       const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       return sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
@@ -111,17 +129,17 @@ module.exports.register = function(server, options, next) {
       }).then(function(token) {
         reply('<html>' +
           '<head>' +
-            '<script type="text/javascript">' +
-              'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
-              'window.location.href = "' + buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) + '";' +
-            '</script>' +
+          '<script type="text/javascript">' +
+          'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
+          'window.location.href = "' + buildUrl([urlHelpers.getBaseUrl(req), '/']) + '";' +
+          '</script>' +
           '</head>' +
-        '</html>');
+          '</html>');
       })
-      .catch(function(err) {
-        server.log([ 'error' ], 'Login callback failed', err);
-        reply(Boom.wrap(err));
-      });
+        .catch(function(err) {
+          server.log(['error'], 'Login callback failed', err);
+          reply(Boom.wrap(err));
+        });
     }
   });
 
@@ -132,15 +150,15 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      const encodedBaseUrl = encodeURIComponent(buildUrl([ urlHelpers.getBaseUrl(req), '/' ]));
+      const encodedBaseUrl = encodeURIComponent(buildUrl([urlHelpers.getBaseUrl(req), '/']));
       reply('<html>' +
         '<head>' +
-          '<script type="text/javascript">' +
-            'sessionStorage.removeItem("' + sessionStorageKey + '");' +
-            'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
-          '</script>' +
+        '<script type="text/javascript">' +
+        'sessionStorage.removeItem("' + sessionStorageKey + '");' +
+        'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
+        '</script>' +
         '</head>' +
-      '</html>');
+        '</html>');
     }
   });
 
@@ -152,9 +170,9 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       reply({
-        redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]) ],
+        redirect_uris: [buildUrl([urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback'])],
         client_name: options.clientName,
-        post_logout_redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) ]
+        post_logout_redirect_uris: [buildUrl([urlHelpers.getBaseUrl(req), '/'])]
       });
     }
   });
@@ -165,7 +183,7 @@ module.exports.register = function(server, options, next) {
     verifyOptions: {
       audience: options.audience,
       issuer: options.baseUrl,
-      algorithms: [ 'HS256' ]
+      algorithms: ['HS256']
     }
   });
 
