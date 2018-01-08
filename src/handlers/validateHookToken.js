@@ -49,7 +49,7 @@ module.exports = function(domain, webtaskUrl, extensionSecret) {
           }
         }
 
-        const err = new tools.HookTokenError(`Hook token missing for the call to: ${hookPath}`);
+        const err = new tools.HookTokenError('Hook token missing for the call to: ' + hookPath);
         return res(Boom.wrap(err, 401, err.message));
       }
     };
