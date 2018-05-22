@@ -70,10 +70,15 @@ module.exports.register = function(server, options, next) {
     return next(new tools.ArgumentError('The provided client name is invalid: ' + options.clientName));
   }
 
+  if (typeof options.storageType !== 'undefined' && options.storageType !== 'sessionStorage' && options.storageType !== 'localStorage') {
+    throw new tools.ArgumentError('The storageType must be either "sessionStorage" or "localStorage". Incorrect storageType: ' + options.storageType);
+  }
+
   const stateKey = options.stateKey || 'state';
   const nonceKey = options.nonceKey || 'nonce';
   const urlPrefix = options.urlPrefix || '';
-  const sessionStorageKey = options.sessionStorageKey || 'apiToken';
+  const storageType = options.storageType || 'sessionStorage';
+  const storageKey = options.storageKey || options.sessionStorageKey || 'apiToken';
 
   server.route({
     method: 'GET',
@@ -130,7 +135,7 @@ module.exports.register = function(server, options, next) {
         reply('<html>' +
           '<head>' +
           '<script type="text/javascript">' +
-          'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
+          storageType + '.setItem("' + storageKey + '", "' + token + '");' +
           'window.location.href = "' + buildUrl([urlHelpers.getBaseUrl(req), '/']) + '";' +
           '</script>' +
           '</head>' +
@@ -154,7 +159,7 @@ module.exports.register = function(server, options, next) {
       reply('<html>' +
         '<head>' +
         '<script type="text/javascript">' +
-        'sessionStorage.removeItem("' + sessionStorageKey + '");' +
+        storageType + '.removeItem("' + storageKey + '");' +
         'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
         '</script>' +
         '</head>' +
