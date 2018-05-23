@@ -20,9 +20,11 @@
     "eslint-plugin-jsx-a11y": "4.0.0",
     "eslint-plugin-react": "6.10.3",
     "faucet": "0.0.1",
+    "hapi": "13.5.0",
     "nock": "9.0.9",
     "nyc": "10.1.2",
-    "tape": "4.6.3"
+    "supertest": "^3.1.0",
+    "tape": "^4.9.0"
   },
   "scripts": {
     "release": "git tag $npm_package_version && git push --tags && npm publish",
