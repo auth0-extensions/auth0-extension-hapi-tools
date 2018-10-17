@@ -139,11 +139,10 @@ module.exports.register = function(server, options, next) {
           '</script>' +
           '</head>' +
           '</html>');
-      })
-        .catch(function(err) {
-          server.log(['error'], 'Login callback failed', err);
-          reply(Boom.wrap(err));
-        });
+      }).catch(function(err) {
+        server.log(['error'], 'Login callback failed', err);
+        reply(Boom.wrap(err));
+      });
     }
   });
 
