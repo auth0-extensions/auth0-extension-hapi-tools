@@ -109,15 +109,19 @@ module.exports.register = function(server, options, next) {
         return reply(Boom.badRequest('State mismatch'));
       }
 
-      var decoded;
+      var decoded = null;
 
       try {
         decoded = jwt.decode(req.payload.id_token);
-      } catch (e) {
-        decoded = null;
+      } catch (e) {}
+
+      if (!decoded) {
+        return reply(Boom.unauthorized('Invalid token'));
       }
 
-      if (!decoded || req.state[nonceKey] !== decoded.nonce) {
+      // handle multiple cookies with same name
+      var nonce = req.state[nonceKey];
+      if (Array.isArray(nonce) ? nonce.indexOf(decoded.nonce) === -1 : nonce !== decoded.nonce) {
         return reply(Boom.badRequest('Nonce mismatch'));
       }
 
