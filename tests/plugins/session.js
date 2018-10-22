@@ -261,7 +261,7 @@ before('before', (t) => {
   };
   server = new Server();
   server.connection({ port: 8080 });
-  server.register([jwt2, session], (err) => {
+  server.register([ jwt2, session ], () => {
     t.pass('setup server');
     t.end();
   });
@@ -275,7 +275,7 @@ test('session#routes.login', (t) => {
 
   server.inject(options, (response) => {
     const loc = url.parse(response.headers.location, true);
-    const states = response.request._states;
+    const states = response.request._states; // eslint-disable-line
     t.equal(loc.query.nonce, states.nonce.value);
     t.equal(loc.query.state, states.state.value);
 
@@ -304,13 +304,13 @@ test('session#routes.login.callback', (t) => {
 });
 
 test('session#routes.login.callback nonce mismatch', (t) => {
-  const id_token = { nonce: '123' };
+  const token = { nonce: '123' };
 
   const options = {
     method: 'POST',
     url: '/login/callback',
     payload: {
-      id_token: jwt.sign(id_token, opts.secret)
+      id_token: jwt.sign(token, opts.secret)
     },
     headers: {
       Cookie: 'nonce=456; nonce=789;'
@@ -329,13 +329,13 @@ test('session#routes.login.callback nonce mismatch', (t) => {
 });
 
 test('session#routes.login.callback nonce passed', (t) => {
-  const id_token = { nonce: '123' };
+  const token = { nonce: '123' };
 
   const options = {
     method: 'POST',
     url: '/login/callback',
     payload: {
-      id_token: jwt.sign(id_token, opts.secret)
+      id_token: jwt.sign(token, opts.secret)
     },
     headers: {
       Cookie: 'nonce=456; nonce=123;'

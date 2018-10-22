@@ -13,6 +13,10 @@ const buildUrl = function(paths) {
     .replace('https:/', 'https://');
 };
 
+const findCookie = function(cookie, value) {
+  return Array.isArray(cookie) ? cookie.indexOf(value) === -1 : cookie !== value;
+};
+
 module.exports.register = function(server, options, next) {
   if (!options || typeof options !== 'object') {
     return next(new tools.ArgumentError('Must provide the options'));
@@ -86,7 +90,7 @@ module.exports.register = function(server, options, next) {
       const state = crypto.randomBytes(16).toString('hex');
       const nonce = crypto.randomBytes(16).toString('hex');
       const redirectTo = sessionManager.createAuthorizeUrl({
-        redirectUri: buildUrl([urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback']),
+        redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
         scopes: options.scopes,
         expiration: options.expiration,
         nonce: nonce,
@@ -105,25 +109,26 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      if (req.state[stateKey] !== req.payload.state) {
-        return reply(Boom.badRequest('State mismatch'));
-      }
-
-      var decoded = null;
+      var decoded;
 
       try {
         decoded = jwt.decode(req.payload.id_token);
-      } catch (e) {}
+      } catch (e) {
+        decoded = null;
+      }
 
       if (!decoded) {
         return reply(Boom.unauthorized('Invalid token'));
       }
 
       // handle multiple cookies with same name
-      var nonce = req.state[nonceKey];
-      if (Array.isArray(nonce) ? nonce.indexOf(decoded.nonce) === -1 : nonce !== decoded.nonce) {
+      if (findCookie(req.state[nonceKey], decoded.nonce)) {
         return reply(Boom.badRequest('Nonce mismatch'));
       }
+      if (findCookie(req.state[stateKey], req.payload.state)) {
+        return reply(Boom.badRequest('State mismatch'));
+      }
+
       return sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
         issuer: options.baseUrl,
@@ -133,14 +138,14 @@ module.exports.register = function(server, options, next) {
           '<head>' +
           '<script type="text/javascript">' +
           'sessionStorage.setItem("' + sessionStorageKey + '", "' + token + '");' +
-          'window.location.href = "' + buildUrl([urlHelpers.getBaseUrl(req), '/']) + '";' +
+          'window.location.href = "' + buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) + '";' +
           '</script>' +
           '</head>' +
           '</html>')
           .unstate(nonceKey)
           .unstate(stateKey);
       }).catch(function(err) {
-        server.log(['error'], 'Login callback failed', err);
+        server.log([ 'error' ], 'Login callback failed', err);
         reply(Boom.wrap(err));
       });
     }
@@ -153,7 +158,7 @@ module.exports.register = function(server, options, next) {
       auth: false
     },
     handler: function(req, reply) {
-      const encodedBaseUrl = encodeURIComponent(buildUrl([urlHelpers.getBaseUrl(req), '/']));
+      const encodedBaseUrl = encodeURIComponent(buildUrl([ urlHelpers.getBaseUrl(req), '/' ]));
       reply('<html>' +
         '<head>' +
         '<script type="text/javascript">' +
@@ -175,9 +180,9 @@ module.exports.register = function(server, options, next) {
     },
     handler: function(req, reply) {
       reply({
-        redirect_uris: [buildUrl([urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback'])],
+        redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]) ],
         client_name: options.clientName,
-        post_logout_redirect_uris: [buildUrl([urlHelpers.getBaseUrl(req), '/'])]
+        post_logout_redirect_uris: [ buildUrl([ urlHelpers.getBaseUrl(req), '/' ]) ]
       });
     }
   });
@@ -188,7 +193,7 @@ module.exports.register = function(server, options, next) {
     verifyOptions: {
       audience: options.audience,
       issuer: options.baseUrl,
-      algorithms: ['HS256']
+      algorithms: [ 'HS256' ]
     }
   });
 
