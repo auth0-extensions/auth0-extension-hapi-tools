@@ -3,12 +3,13 @@ const Server = require('hapi').Server;
 const jwt2 = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 const url = require('url');
+const tools = require('auth0-extension-tools');
 
 const plugins = require('../../src').plugins;
 
 const before = test;
 
-test('session#register should fail if no options provided', function(t) {
+test('session#register should fail if no options provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: 'opts'
@@ -20,7 +21,7 @@ test('session#register should fail if no options provided', function(t) {
   });
 });
 
-test('session#register should fail if no callback provided', function(t) {
+test('session#register should fail if no callback provided', (t) => {
   // options get defaulted to {} unless explicitly set
   const plugin = {
     register: plugins.dashboardAdminSession
@@ -32,7 +33,7 @@ test('session#register should fail if no callback provided', function(t) {
   });
 });
 
-test('session#register should fail if no secret provided', function(t) {
+test('session#register should fail if no secret provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -46,7 +47,7 @@ test('session#register should fail if no secret provided', function(t) {
   });
 });
 
-test('session#register should fail if secret is invalid', function(t) {
+test('session#register should fail if secret is invalid', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -61,7 +62,7 @@ test('session#register should fail if secret is invalid', function(t) {
   });
 });
 
-test('session#register should fail if no audience provided', function(t) {
+test('session#register should fail if no audience provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -76,7 +77,7 @@ test('session#register should fail if no audience provided', function(t) {
   });
 });
 
-test('session#register should fail if audience is invalid', function(t) {
+test('session#register should fail if audience is invalid', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -92,7 +93,7 @@ test('session#register should fail if audience is invalid', function(t) {
   });
 });
 
-test('session#register should fail if no rta provided', function(t) {
+test('session#register should fail if no rta provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -108,7 +109,7 @@ test('session#register should fail if no rta provided', function(t) {
   });
 });
 
-test('session#register should fail if rta is invalid', function(t) {
+test('session#register should fail if rta is invalid', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -125,7 +126,7 @@ test('session#register should fail if rta is invalid', function(t) {
   });
 });
 
-test('session#register should fail if no domain provided', function(t) {
+test('session#register should fail if no domain provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -142,7 +143,7 @@ test('session#register should fail if no domain provided', function(t) {
   });
 });
 
-test('session#register should fail if no domain provided', function(t) {
+test('session#register should fail if no domain provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -160,7 +161,7 @@ test('session#register should fail if no domain provided', function(t) {
   });
 });
 
-test('session#register should fail if no baseUrl provided', function(t) {
+test('session#register should fail if no baseUrl provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -178,7 +179,7 @@ test('session#register should fail if no baseUrl provided', function(t) {
   });
 });
 
-test('session#register should fail if no baseUrl provided', function(t) {
+test('session#register should fail if no baseUrl provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -197,7 +198,7 @@ test('session#register should fail if no baseUrl provided', function(t) {
   });
 });
 
-test('session#register should fail if no clientName provided', function(t) {
+test('session#register should fail if no clientName provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -216,7 +217,7 @@ test('session#register should fail if no clientName provided', function(t) {
   });
 });
 
-test('session#register should fail if no clientName provided', function(t) {
+test('session#register should fail if no clientName provided', (t) => {
   const plugin = {
     register: plugins.dashboardAdminSession,
     options: {
@@ -237,28 +238,26 @@ test('session#register should fail if no clientName provided', function(t) {
 });
 
 // --------------------------------------------------
+const opts = {
+  rta: 'auth0.auth0.com',
+  domain: 'hapi.auth0.com',
+  scopes: 'read:clients',
+  baseUrl: 'https://test.us.webtask.io/adf6e2f2b84784b57522e3b19dfc9201',
+  audience: 'urn:api-hapi',
+  secret: 'asecret',
+  clientName: 'Hapi Extension',
+  onLoginSuccess: (decoded, req, cb) => cb(null, !!decoded, decoded)
+};
+const sessionManager = new tools.SessionManager(opts.rta, opts.domain, opts.baseUrl);
+sessionManager.create = () => Promise.resolve('mytoken'); // mock create
+opts.sessionManager = sessionManager;
 
 let server;
 
 before('before', (t) => {
   const session = {
     register: plugins.dashboardAdminSession,
-    options: {
-      rta: 'auth0.auth0.com',
-      domain: 'hapi.auth0.com',
-      scopes: 'read:clients',
-      baseUrl: 'https://test.us.webtask.io/adf6e2f2b84784b57522e3b19dfc9201',
-      audience: 'urn:api-hapi',
-      secret: '1234576890',
-      clientName: 'Hapi Extension',
-      onLoginSuccess: (decoded, req, callback) => {
-        if (decoded) {
-          decoded.scope = scopes.map(scope => scope.value); // eslint-disable-line no-param-reassign
-          return callback(null, true, decoded);
-        }
-        return callback(null, false);
-      }
-    }
+    options: opts
   };
   server = new Server();
   server.connection({ port: 8080 });
@@ -268,7 +267,7 @@ before('before', (t) => {
   });
 });
 
-test('session#routes.login', function(t) {
+test('session#routes.login', (t) => {
   const options = {
     method: 'GET',
     url: '/login'
@@ -284,7 +283,7 @@ test('session#routes.login', function(t) {
   });
 });
 
-test('session#routes.login.callback', function(t) {
+test('session#routes.login.callback', (t) => {
   const options = {
     method: 'POST',
     url: '/login/callback',
@@ -304,22 +303,21 @@ test('session#routes.login.callback', function(t) {
   });
 });
 
-test('session#routes.login.callback nonce mismatch', function(t) {
+test('session#routes.login.callback nonce mismatch', (t) => {
   const id_token = { nonce: '123' };
 
   const options = {
     method: 'POST',
     url: '/login/callback',
     payload: {
-      id_token: jwt.sign(id_token, '1234576890')
+      id_token: jwt.sign(id_token, opts.secret)
     },
     headers: {
-      Cookie: 'nonce=456; nonce=789'
+      Cookie: 'nonce=456; nonce=789;'
     }
   };
 
   server.inject(options, (response) => {
-     console.log('response :', response);
     t.equal(response.statusCode, 400);
     t.deepEqual(response.result, {
       statusCode: 400,
@@ -330,22 +328,40 @@ test('session#routes.login.callback nonce mismatch', function(t) {
   });
 });
 
-test('session#routes.login.callback nonce passed', function(t) {
+test('session#routes.login.callback nonce passed', (t) => {
   const id_token = { nonce: '123' };
 
   const options = {
     method: 'POST',
     url: '/login/callback',
     payload: {
-      id_token: jwt.sign(id_token, '1234576890')
+      id_token: jwt.sign(id_token, opts.secret)
     },
     headers: {
-      Cookie: 'nonce=456; nonce=123'
+      Cookie: 'nonce=456; nonce=123;'
     }
   };
 
   server.inject(options, (response) => {
-    t.equal(response.statusCode, 500);
+    t.equal(response.headers['set-cookie'].length, 2);
+    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
+    t.equal(cookies[0], 'nonce=');
+    t.equal(cookies[1], 'state=');
+    t.end();
+  });
+});
+
+test('session#routes.logout should clear cookies', (t) => {
+  const options = {
+    method: 'GET',
+    url: '/logout'
+  };
+
+  server.inject(options, (response) => {
+    t.equal(response.headers['set-cookie'].length, 2);
+    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
+    t.equal(cookies[0], 'nonce=');
+    t.equal(cookies[1], 'state=');
     t.end();
   });
 });

@@ -74,6 +74,7 @@ module.exports.register = function(server, options, next) {
   const nonceKey = options.nonceKey || 'nonce';
   const urlPrefix = options.urlPrefix || '';
   const sessionStorageKey = options.sessionStorageKey || 'apiToken';
+  const sessionManager = options.sessionManager || new tools.SessionManager(options.rta, options.domain, options.baseUrl);
 
   server.route({
     method: 'GET',
@@ -84,7 +85,6 @@ module.exports.register = function(server, options, next) {
     handler: function(req, reply) {
       const state = crypto.randomBytes(16).toString('hex');
       const nonce = crypto.randomBytes(16).toString('hex');
-      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       const redirectTo = sessionManager.createAuthorizeUrl({
         redirectUri: buildUrl([urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback']),
         scopes: options.scopes,
@@ -124,8 +124,6 @@ module.exports.register = function(server, options, next) {
       if (Array.isArray(nonce) ? nonce.indexOf(decoded.nonce) === -1 : nonce !== decoded.nonce) {
         return reply(Boom.badRequest('Nonce mismatch'));
       }
-
-      const sessionManager = new tools.SessionManager(options.rta, options.domain, options.baseUrl);
       return sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
         issuer: options.baseUrl,
@@ -138,7 +136,9 @@ module.exports.register = function(server, options, next) {
           'window.location.href = "' + buildUrl([urlHelpers.getBaseUrl(req), '/']) + '";' +
           '</script>' +
           '</head>' +
-          '</html>');
+          '</html>')
+          .unstate(nonceKey)
+          .unstate(stateKey);
       }).catch(function(err) {
         server.log(['error'], 'Login callback failed', err);
         reply(Boom.wrap(err));
@@ -161,7 +161,9 @@ module.exports.register = function(server, options, next) {
         'window.location.href = "https://' + options.rta + '/v2/logout/?returnTo=' + encodedBaseUrl + '&client_id=' + encodedBaseUrl + '";' +
         '</script>' +
         '</head>' +
-        '</html>');
+        '</html>')
+        .unstate(nonceKey)
+        .unstate(stateKey);
     }
   });
 
