@@ -5,13 +5,13 @@ const jwt = require('jsonwebtoken');
 const url = require('url');
 const tools = require('auth0-extension-tools');
 
-const plugins = require('../../src').plugins;
+const session = require('../../src/plugins/session');
 
 const before = test;
 
 test('session#register should fail if no options provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: 'opts'
   };
 
@@ -24,7 +24,7 @@ test('session#register should fail if no options provided', (t) => {
 test('session#register should fail if no callback provided', (t) => {
   // options get defaulted to {} unless explicitly set
   const plugin = {
-    register: plugins.dashboardAdminSession
+    register: session
   };
 
   new Server().register(plugin, (err) => {
@@ -35,7 +35,7 @@ test('session#register should fail if no callback provided', (t) => {
 
 test('session#register should fail if no secret provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null
     }
@@ -49,7 +49,7 @@ test('session#register should fail if no secret provided', (t) => {
 
 test('session#register should fail if secret is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: ''
@@ -64,7 +64,7 @@ test('session#register should fail if secret is invalid', (t) => {
 
 test('session#register should fail if no audience provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'asecret'
@@ -79,7 +79,7 @@ test('session#register should fail if no audience provided', (t) => {
 
 test('session#register should fail if audience is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'asecret',
@@ -95,7 +95,7 @@ test('session#register should fail if audience is invalid', (t) => {
 
 test('session#register should fail if no rta provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -111,7 +111,7 @@ test('session#register should fail if no rta provided', (t) => {
 
 test('session#register should fail if rta is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -128,7 +128,7 @@ test('session#register should fail if rta is invalid', (t) => {
 
 test('session#register should fail if no domain provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -143,9 +143,9 @@ test('session#register should fail if no domain provided', (t) => {
   });
 });
 
-test('session#register should fail if no domain provided', (t) => {
+test('session#register should fail if domain is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -163,7 +163,7 @@ test('session#register should fail if no domain provided', (t) => {
 
 test('session#register should fail if no baseUrl provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -179,9 +179,9 @@ test('session#register should fail if no baseUrl provided', (t) => {
   });
 });
 
-test('session#register should fail if no baseUrl provided', (t) => {
+test('session#register should fail if baseUrl is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -200,7 +200,7 @@ test('session#register should fail if no baseUrl provided', (t) => {
 
 test('session#register should fail if no clientName provided', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -217,9 +217,9 @@ test('session#register should fail if no clientName provided', (t) => {
   });
 });
 
-test('session#register should fail if no clientName provided', (t) => {
+test('session#register should fail if clientName is invalid', (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    register: session,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -255,13 +255,13 @@ opts.sessionManager = sessionManager;
 let server;
 
 before('before', (t) => {
-  const session = {
-    register: plugins.dashboardAdminSession,
+  const plugin = {
+    register: session,
     options: opts
   };
   server = new Server();
   server.connection({ port: 8080 });
-  server.register([ jwt2, session ], () => {
+  server.register([ jwt2, plugin ], () => {
     t.pass('setup server');
     t.end();
   });
@@ -328,6 +328,32 @@ test('session#routes.login.callback nonce mismatch', (t) => {
   });
 });
 
+test('session#routes.login.callback nonce mismatch', (t) => {
+  const token = { nonce: '123' };
+
+  const options = {
+    method: 'POST',
+    url: '/login/callback',
+    payload: {
+      state: '123',
+      id_token: jwt.sign(token, opts.secret)
+    },
+    headers: {
+      Cookie: 'nonce=123; state=321;'
+    }
+  };
+
+  server.inject(options, (response) => {
+    t.equal(response.statusCode, 400);
+    t.deepEqual(response.result, {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'State mismatch'
+    });
+    t.end();
+  });
+});
+
 test('session#routes.login.callback nonce passed', (t) => {
   const token = { nonce: '123' };
 
@@ -362,6 +388,36 @@ test('session#routes.logout should clear cookies', (t) => {
     const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
     t.equal(cookies[0], 'nonce=');
     t.equal(cookies[1], 'state=');
+    t.end();
+  });
+});
+
+test('session should return 200 if everything is ok', (t) => {
+  const token = {
+    iss: 'https://auth0.auth0.com/',
+    sub: '1234567890',
+    aud: 'https://test.auth0.com/api/v2/',
+    azp: 'https://test.auth0.com/api/v2/',
+    name: 'John Doe',
+    admin: true,
+    nonce: 'nonce'
+  };
+
+  const options = {
+    method: 'POST',
+    url: '/login/callback',
+    payload: {
+      state: 'state',
+      id_token: jwt.sign(token, opts.secret)
+    },
+    headers: {
+      Cookie: 'nonce=nonce; state=state;'
+    }
+  };
+
+  server.inject(options, (response) => {
+    t.equal(response.statusCode, 200);
+    t.ok(response.result && response.result.indexOf('sessionStorage.setItem("apiToken"') > 0);
     t.end();
   });
 });
