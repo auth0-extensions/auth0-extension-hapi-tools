@@ -328,7 +328,7 @@ test('session#routes.login.callback nonce mismatch', (t) => {
   });
 });
 
-test('session#routes.login.callback nonce mismatch', (t) => {
+test('session#routes.login.callback state mismatch', (t) => {
   const token = { nonce: '123' };
 
   const options = {
