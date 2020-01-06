@@ -328,6 +328,31 @@ test('session#routes.login.callback nonce mismatch', (t) => {
   });
 });
 
+test('session#routes.login.callback legacy nonce mismatch', (t) => {
+  const token = { nonce_compat: '123' };
+
+  const options = {
+    method: 'POST',
+    url: '/login/callback',
+    payload: {
+      id_token: jwt.sign(token, opts.secret)
+    },
+    headers: {
+      Cookie: 'nonce_compat=456; nonce_compat=789;'
+    }
+  };
+
+  server.inject(options, (response) => {
+    t.equal(response.statusCode, 400);
+    t.deepEqual(response.result, {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Nonce mismatch'
+    });
+    t.end();
+  });
+});
+
 test('session#routes.login.callback nonce passed', (t) => {
   const token = { nonce: '123' };
 
@@ -343,7 +368,29 @@ test('session#routes.login.callback nonce passed', (t) => {
   };
 
   server.inject(options, (response) => {
-    t.equal(response.headers['set-cookie'].length, 2);
+    t.equal(response.headers['set-cookie'].length, 4);
+    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
+    t.equal(cookies[0], 'nonce=');
+    t.equal(cookies[1], 'state=');
+    t.end();
+  });
+});
+
+test('session#routes.login.callback legacy nonce passed', (t) => {
+  const token = { nonce: '123' };
+  const options = {
+    method: 'POST',
+    url: '/login/callback',
+    payload: {
+      id_token: jwt.sign(token, opts.secret)
+    },
+    headers: {
+      Cookie: 'nonce_compat=456; nonce_compat=123;'
+    }
+  };
+
+  server.inject(options, (response) => {
+    t.equal(response.headers['set-cookie'].length, 4);
     const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
     t.equal(cookies[0], 'nonce=');
     t.equal(cookies[1], 'state=');
@@ -358,7 +405,7 @@ test('session#routes.logout should clear cookies', (t) => {
   };
 
   server.inject(options, (response) => {
-    t.equal(response.headers['set-cookie'].length, 2);
+    t.equal(response.headers['set-cookie'].length, 4);
     const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
     t.equal(cookies[0], 'nonce=');
     t.equal(cookies[1], 'state=');
