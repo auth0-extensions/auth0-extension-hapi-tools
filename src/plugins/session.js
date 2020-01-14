@@ -89,6 +89,15 @@ module.exports.register = function(server, options, next) {
     handler: function(req, reply) {
       const state = crypto.randomBytes(16).toString('hex');
       const nonce = crypto.randomBytes(16).toString('hex');
+      const basicCookieAttr = {
+        isHttpOnly: true,
+        path: urlHelpers.getBasePath(req)
+      };
+      server.state(nonceKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+      server.state(stateKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+      server.state(nonceKey + '_compat', basicCookieAttr);
+      server.state(stateKey + '_compat', basicCookieAttr);
+
       const redirectTo = sessionManager.createAuthorizeUrl({
         redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
         scopes: options.scopes,
@@ -98,7 +107,9 @@ module.exports.register = function(server, options, next) {
       });
       reply.redirect(redirectTo)
         .state(nonceKey, nonce)
-        .state(stateKey, state);
+        .state(stateKey, state)
+        .state(nonceKey + '_compat', nonce)
+        .state(stateKey + '_compat', state);
     }
   });
 
@@ -120,15 +131,13 @@ module.exports.register = function(server, options, next) {
       if (!decoded) {
         return reply(Boom.unauthorized('Invalid token'));
       }
-
       // handle multiple cookies with same name
-      if (findCookie(req.state[nonceKey], decoded.nonce)) {
+      if ((req.state && req.state[nonceKey] && findCookie(req.state[nonceKey], decoded.nonce)) || (req.state && req.state[nonceKey + '_compat'] && findCookie(req.state[nonceKey + '_compat'], decoded.nonce))) {
         return reply(Boom.badRequest('Nonce mismatch'));
       }
-      if (findCookie(req.state[stateKey], req.payload.state)) {
+      if ((req.state && req.state[stateKey] && findCookie(req.state[stateKey], req.payload.state)) || (req.state && req.state[stateKey + '_compat'] && findCookie(req.state[stateKey + '_compat'], req.payload.state))) {
         return reply(Boom.badRequest('State mismatch'));
       }
-
       return sessionManager.create(req.payload.id_token, req.payload.access_token, {
         secret: options.secret,
         issuer: options.baseUrl,
@@ -142,8 +151,10 @@ module.exports.register = function(server, options, next) {
           '</script>' +
           '</head>' +
           '</html>')
-          .unstate(nonceKey)
-          .unstate(stateKey);
+          .unstate(nonceKey, { path: urlHelpers.getBasePath(req) })
+          .unstate(stateKey, { path: urlHelpers.getBasePath(req) })
+          .unstate(nonceKey + '_compat', { path: urlHelpers.getBasePath(req) })
+          .unstate(stateKey + '_compat', { path: urlHelpers.getBasePath(req) });
       }).catch(function(err) {
         server.log([ 'error' ], 'Login callback failed', err);
         reply(Boom.wrap(err));
@@ -168,7 +179,9 @@ module.exports.register = function(server, options, next) {
         '</head>' +
         '</html>')
         .unstate(nonceKey)
-        .unstate(stateKey);
+        .unstate(stateKey)
+        .unstate(nonceKey + '_compat')
+        .unstate(stateKey + '_compat');
     }
   });
 
