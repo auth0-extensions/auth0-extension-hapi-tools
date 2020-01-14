@@ -11,6 +11,7 @@
     "webtask-tools": "^3.1.1"
   },
   "devDependencies": {
+    "@auth0/hapi": "^13.5.1",
     "autochecker": "^0.9.2",
     "eslint": "3.18.0",
     "eslint-config-auth0": "10.0.0",
@@ -20,9 +21,9 @@
     "eslint-plugin-jsx-a11y": "4.0.0",
     "eslint-plugin-react": "6.10.3",
     "faucet": "0.0.1",
-    "hapi": "13.5.0",
     "nock": "9.0.9",
     "nyc": "10.1.2",
+    "remove": "^0.1.5",
     "tape": "4.6.3"
   },
   "scripts": {

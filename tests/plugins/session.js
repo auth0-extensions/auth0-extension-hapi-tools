@@ -1,5 +1,5 @@
 const test = require('tape');
-const Server = require('hapi').Server;
+const Server = require('@auth0/hapi').Server;
 const jwt2 = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 const url = require('url');
@@ -8,6 +8,20 @@ const tools = require('auth0-extension-tools');
 const plugins = require('../../src').plugins;
 
 const before = test;
+
+function parseCookie(cookie) {
+  return cookie.split(';').reduce(function(prev, curr) {
+    if (!curr.includes('=')) {
+      prev[curr.trim()] = true;
+      return prev;
+    }
+    const m = / *([^=]+)=(.*)/.exec(curr);
+    const key = m[1];
+    const value = decodeURIComponent(m[2]);
+    prev[key] = value;
+    return prev;
+  }, {});
+}
 
 test('session#register should fail if no options provided', (t) => {
   const plugin = {
@@ -391,9 +405,19 @@ test('session#routes.login.callback legacy nonce passed', (t) => {
 
   server.inject(options, (response) => {
     t.equal(response.headers['set-cookie'].length, 4);
-    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
-    t.equal(cookies[0], 'nonce=');
-    t.equal(cookies[1], 'state=');
+    const cookies = response.headers['set-cookie'].map(c => parseCookie(c));
+    t.equal(cookies[0].nonce, '');
+    t.equal(cookies[0].SameSite, 'None');
+    t.equal(cookies[0].Secure, true);
+    t.equal(cookies[1].state, '');
+    t.equal(cookies[1].SameSite, 'None');
+    t.equal(cookies[1].Secure, true);
+    t.equal(cookies[2].nonce_compat, '');
+    t.false(cookies[2].SameSite);
+    t.false(cookies[2].Secure);
+    t.equal(cookies[3].state_compat, '');
+    t.false(cookies[3].SameSite);
+    t.false(cookies[3].Secure);
     t.end();
   });
 });
@@ -409,6 +433,8 @@ test('session#routes.logout should clear cookies', (t) => {
     const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
     t.equal(cookies[0], 'nonce=');
     t.equal(cookies[1], 'state=');
+    t.equal(cookies[2], 'nonce_compat=');
+    t.equal(cookies[3], 'state_compat=');
     t.end();
   });
 });

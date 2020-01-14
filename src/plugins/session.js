@@ -90,9 +90,14 @@ module.exports.register = function(server, options, next) {
       const state = crypto.randomBytes(16).toString('hex');
       const nonce = crypto.randomBytes(16).toString('hex');
       const basicCookieAttr = {
-        httpOnly: true,
+        isHttpOnly: true,
         path: urlHelpers.getBasePath(req)
       };
+      server.state(nonceKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+      server.state(stateKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+      server.state(nonceKey + '_compat', basicCookieAttr);
+      server.state(stateKey + '_compat', basicCookieAttr);
+
       const redirectTo = sessionManager.createAuthorizeUrl({
         redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
         scopes: options.scopes,
@@ -101,10 +106,10 @@ module.exports.register = function(server, options, next) {
         state: state
       });
       reply.redirect(redirectTo)
-        .state(nonceKey, nonce, Object.assign(basicCookieAttr, { sameSite: 'None', secure: true }))
-        .state(stateKey, state, Object.assign(basicCookieAttr, { sameSite: 'None', secure: true }))
-        .state(nonceKey + '_compat', nonce, basicCookieAttr)
-        .state(stateKey + '_compat', state, basicCookieAttr);
+        .state(nonceKey, nonce)
+        .state(stateKey, state)
+        .state(nonceKey + '_compat', nonce)
+        .state(stateKey + '_compat', state);
     }
   });
 
