@@ -79,6 +79,14 @@ module.exports.register = function(server, options, next) {
   const urlPrefix = options.urlPrefix || '';
   const sessionStorageKey = options.sessionStorageKey || 'apiToken';
   const sessionManager = options.sessionManager || new tools.SessionManager(options.rta, options.domain, options.baseUrl);
+  const basicCookieAttr = {
+    isHttpOnly: true
+  };
+  server.state(nonceKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+  server.state(stateKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
+  server.state(nonceKey + '_compat', basicCookieAttr);
+  server.state(stateKey + '_compat', basicCookieAttr);
+
 
   server.route({
     method: 'GET',
@@ -89,14 +97,6 @@ module.exports.register = function(server, options, next) {
     handler: function(req, reply) {
       const state = crypto.randomBytes(16).toString('hex');
       const nonce = crypto.randomBytes(16).toString('hex');
-      const basicCookieAttr = {
-        isHttpOnly: true,
-        path: urlHelpers.getBasePath(req)
-      };
-      server.state(nonceKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
-      server.state(stateKey, Object.assign({}, basicCookieAttr, { isSameSite: 'None', isSecure: true }));
-      server.state(nonceKey + '_compat', basicCookieAttr);
-      server.state(stateKey + '_compat', basicCookieAttr);
 
       const redirectTo = sessionManager.createAuthorizeUrl({
         redirectUri: buildUrl([ urlHelpers.getBaseUrl(req), urlPrefix, '/login/callback' ]),
@@ -106,10 +106,10 @@ module.exports.register = function(server, options, next) {
         state: state
       });
       reply.redirect(redirectTo)
-        .state(nonceKey, nonce)
-        .state(stateKey, state)
-        .state(nonceKey + '_compat', nonce)
-        .state(stateKey + '_compat', state);
+        .state(nonceKey, nonce, { path: urlHelpers.getBasePath(req) })
+        .state(stateKey, state, { path: urlHelpers.getBasePath(req) })
+        .state(nonceKey + '_compat', nonce, { path: urlHelpers.getBasePath(req) })
+        .state(stateKey + '_compat', state, { path: urlHelpers.getBasePath(req) });
     }
   });
 
@@ -178,10 +178,10 @@ module.exports.register = function(server, options, next) {
         '</script>' +
         '</head>' +
         '</html>')
-        .unstate(nonceKey)
-        .unstate(stateKey)
-        .unstate(nonceKey + '_compat')
-        .unstate(stateKey + '_compat');
+        .unstate(nonceKey, { path: urlHelpers.getBasePath(req) })
+        .unstate(stateKey, { path: urlHelpers.getBasePath(req) })
+        .unstate(nonceKey + '_compat', { path: urlHelpers.getBasePath(req) })
+        .unstate(stateKey + '_compat', { path: urlHelpers.getBasePath(req) });
     }
   });
 
