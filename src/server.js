@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Request = require('request');
 const tools = require('auth0-extension-tools');
 
@@ -9,23 +9,21 @@ module.exports.createServer = function(cb) {
 const SANITIZE_RX = /[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g;
 
 function fromHapi(serverFactory) {
-  var hapiServer;
-  var webtaskContext;
+  let hapiServer;
 
   return function(context, req, res) {
-    webtaskContext = attachStorageHelpers(context);
-
     if (hapiServer == null) {
+      const webtaskContext = attachStorageHelpers(context);
       hapiServer = serverFactory(webtaskContext);
       hapiServer.ext('onRequest', function(hapiRequest, reply) {
-        var normalizeRouteRx = createRouteNormalizationRx(hapiRequest.raw.req.x_wt);
+        const normalizeRouteRx = createRouteNormalizationRx(hapiRequest.raw.req.x_wt);
         if (normalizeRouteRx) {
           hapiRequest.originalUrl = hapiRequest.url.path;
           hapiRequest.setUrl(hapiRequest.url.path.replace(normalizeRouteRx, '/'));
         }
 
         /* Fix multi-proto environments, take the first */
-        if (hapiRequest.headers['x-forwarded-proto'] ) {
+        if (hapiRequest.headers['x-forwarded-proto']) {
           hapiRequest.headers['x-forwarded-proto'] = hapiRequest.headers['x-forwarded-proto'].split(',').shift();
         }
 
@@ -34,7 +32,7 @@ function fromHapi(serverFactory) {
       });
     }
 
-    var dispatch = hapiServer.connections[0]._dispatch();
+    const dispatch = hapiServer._core._dispatch();
     dispatch(req, res);
   };
 }
@@ -48,10 +46,10 @@ function createRouteNormalizationRx(claims) {
     return null;
   }
 
-  var container = claims.container.replace(SANITIZE_RX, '\\$&');
-  var name = claims.jtn
-      ? claims.jtn.replace(SANITIZE_RX, '\\$&')
-      : '';
+  const container = claims.container.replace(SANITIZE_RX, '\\$&');
+  const name = claims.jtn
+    ? claims.jtn.replace(SANITIZE_RX, '\\$&')
+    : '';
 
   if (claims.url_format === USE_SHARED_DOMAIN) {
     return new RegExp('^\/api/run/' + container + '/(?:' + name + '\/?)?');
@@ -65,11 +63,11 @@ function createRouteNormalizationRx(claims) {
 
 function attachStorageHelpers(context) {
   context.read = context.secrets.EXT_STORAGE_URL
-      ? readFromPath
-      : readNotAvailable;
+    ? readFromPath
+    : readNotAvailable;
   context.write = context.secrets.EXT_STORAGE_URL
-      ? writeToPath
-      : writeNotAvailable;
+    ? writeToPath
+    : writeNotAvailable;
 
   return context;
 
@@ -96,7 +94,7 @@ function attachStorageHelpers(context) {
       qs: { path: path },
       json: true
     }, function(err, res, body) {
-      if (err) return cb(Boom.wrap(err, 502));
+      if (err) return cb(Boom.boomify(err, { statusCode: 502 }));
       if (res.statusCode === 404 && Object.hasOwnProperty.call(options, 'defaultValue')) return cb(null, options.defaultValue);
       if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
 
@@ -126,7 +124,7 @@ function attachStorageHelpers(context) {
       qs: { path: path },
       body: data
     }, function(err, res, body) {
-      if (err) return cb(Boom.wrap(err, 502));
+      if (err) return cb(Boom.boomify(err, { statusCode: 502 }));
       if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
 
       cb(null);

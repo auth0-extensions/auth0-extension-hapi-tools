@@ -22,5 +22,5 @@ module.exports.handlers = handlers;
  * Plugins
  */
 module.exports.plugins = {
-  dashboardAdminSession: dashboardAdminSession
+  dashboardAdminSession
 };

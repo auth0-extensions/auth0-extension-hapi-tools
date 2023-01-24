@@ -1,5 +1,5 @@
 const test = require('tape');
-const Server = require('@auth0/hapi').Server;
+const Server = require('@hapi/hapi').Server;
 const jwt2 = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 const url = require('url');
@@ -10,7 +10,7 @@ const plugins = require('../../src').plugins;
 const before = test;
 
 function parseCookie(cookie) {
-  return cookie.split(';').reduce(function(prev, curr) {
+  return cookie.split(';').reduce(function (prev, curr) {
     if (!curr.includes('=')) {
       prev[curr.trim()] = true;
       return prev;
@@ -23,77 +23,93 @@ function parseCookie(cookie) {
   }, {});
 }
 
-test('session#register should fail if no options provided', (t) => {
+test('session#register should fail if no options provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: 'opts'
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide the options');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no callback provided', (t) => {
+test('session#register should fail if no callback provided', async (t) => {
   // options get defaulted to {} unless explicitly set
   const plugin = {
-    register: plugins.dashboardAdminSession
+    plugin: plugins.dashboardAdminSession
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid login callback');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no secret provided', (t) => {
+test('session#register should fail if no secret provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid secret');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if secret is invalid', (t) => {
+test('session#register should fail if secret is invalid', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: ''
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided secret is invalid: ');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no audience provided', (t) => {
+test('session#register should fail if no audience provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'asecret'
     }
   };
 
-  new Server().register(plugin, (err) => {
+
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid audience');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if audience is invalid', (t) => {
+test('session#register should fail if audience is invalid', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'asecret',
@@ -101,15 +117,18 @@ test('session#register should fail if audience is invalid', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided audience is invalid: ');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no rta provided', (t) => {
+test('session#register should fail if no rta provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -117,15 +136,18 @@ test('session#register should fail if no rta provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid rta');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if rta is invalid', (t) => {
+test('session#register should fail if rta is invalid', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -134,15 +156,18 @@ test('session#register should fail if rta is invalid', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided rta is invalid: ');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no domain provided', (t) => {
+test('session#register should fail if no domain provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -151,15 +176,18 @@ test('session#register should fail if no domain provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid domain');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no domain provided', (t) => {
+test('session#register should fail if no domain provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -169,15 +197,18 @@ test('session#register should fail if no domain provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided domain is invalid: ');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no baseUrl provided', (t) => {
+test('session#register should fail if no baseUrl provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -187,15 +218,18 @@ test('session#register should fail if no baseUrl provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid base URL');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no baseUrl provided', (t) => {
+test('session#register should fail if no baseUrl provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -206,15 +240,18 @@ test('session#register should fail if no baseUrl provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided base URL is invalid: ');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no clientName provided', (t) => {
+test('session#register should fail if no clientName provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -225,15 +262,18 @@ test('session#register should fail if no clientName provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'Must provide a valid client name');
     t.end();
-  });
+  }
 });
 
-test('session#register should fail if no clientName provided', (t) => {
+test('session#register should fail if no clientName provided', async (t) => {
   const plugin = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: {
       onLoginSuccess: () => null,
       secret: 'secret',
@@ -245,10 +285,13 @@ test('session#register should fail if no clientName provided', (t) => {
     }
   };
 
-  new Server().register(plugin, (err) => {
+  try {
+    await new Server().register(plugin);
+    t.fail();
+  } catch (err) {
     t.equal(err.message, 'The provided client name is invalid: ');
     t.end();
-  });
+  }
 });
 
 // --------------------------------------------------
@@ -268,36 +311,30 @@ opts.sessionManager = sessionManager;
 
 let server;
 
-before('before', (t) => {
+before('before', async (t) => {
   const session = {
-    register: plugins.dashboardAdminSession,
+    plugin: plugins.dashboardAdminSession,
     options: opts
   };
-  server = new Server();
-  server.connection({ port: 8080 });
-  server.register([ jwt2, session ], () => {
-    t.pass('setup server');
-    t.end();
+  server = new Server({
+    port: 8080
   });
+  await server.register([jwt2, session]);
+  t.pass('setup server');
 });
 
-test('session#routes.login', (t) => {
-  const options = {
-    method: 'GET',
-    url: '/login'
-  };
+test('session#routes.login', async (t) => {
+  const response = await server.inject('/login');
 
-  server.inject(options, (response) => {
-    const loc = url.parse(response.headers.location, true);
-    const states = response.request._states; // eslint-disable-line
-    t.equal(loc.query.nonce, states.nonce.value);
-    t.equal(loc.query.state, states.state.value);
+  const loc = url.parse(response.headers.location, true);
+  const states = response.request._states; // eslint-disable-line
+  t.equal(loc.query.nonce, states.nonce.value);
+  t.equal(loc.query.state, states.state.value);
 
-    t.end();
-  });
+  t.end();
 });
 
-test('session#routes.login.callback', (t) => {
+test('session#routes.login.callback', async (t) => {
   const options = {
     method: 'POST',
     url: '/login/callback',
@@ -306,18 +343,17 @@ test('session#routes.login.callback', (t) => {
     }
   };
 
-  server.inject(options, (response) => {
-    t.deepEqual(response.result, {
-      statusCode: 401,
-      error: 'Unauthorized',
-      message: 'Invalid token'
-    });
-
-    t.end();
+  const response = await server.inject(options);
+  t.deepEqual(response.result, {
+    statusCode: 401,
+    error: 'Unauthorized',
+    message: 'Invalid token'
   });
+
+  t.end();
 });
 
-test('session#routes.login.callback nonce mismatch', (t) => {
+test('session#routes.login.callback nonce mismatch', async (t) => {
   const token = { nonce: '123' };
 
   const options = {
@@ -331,18 +367,17 @@ test('session#routes.login.callback nonce mismatch', (t) => {
     }
   };
 
-  server.inject(options, (response) => {
-    t.equal(response.statusCode, 400);
-    t.deepEqual(response.result, {
-      statusCode: 400,
-      error: 'Bad Request',
-      message: 'Nonce mismatch'
-    });
-    t.end();
+  const response = await server.inject(options);
+  t.equal(response.statusCode, 400);
+  t.deepEqual(response.result, {
+    statusCode: 400,
+    error: 'Bad Request',
+    message: 'Nonce mismatch'
   });
+  t.end();
 });
 
-test('session#routes.login.callback legacy nonce mismatch', (t) => {
+test('session#routes.login.callback legacy nonce mismatch', async (t) => {
   const token = { nonce_compat: '123' };
 
   const options = {
@@ -356,18 +391,17 @@ test('session#routes.login.callback legacy nonce mismatch', (t) => {
     }
   };
 
-  server.inject(options, (response) => {
-    t.equal(response.statusCode, 400);
-    t.deepEqual(response.result, {
-      statusCode: 400,
-      error: 'Bad Request',
-      message: 'Nonce mismatch'
-    });
-    t.end();
+  const response = await server.inject(options);
+  t.equal(response.statusCode, 400);
+  t.deepEqual(response.result, {
+    statusCode: 400,
+    error: 'Bad Request',
+    message: 'Nonce mismatch'
   });
+  t.end();
 });
 
-test('session#routes.login.callback nonce passed', (t) => {
+test('session#routes.login.callback nonce passed', async (t) => {
   const token = { nonce: '123' };
 
   const options = {
@@ -381,16 +415,15 @@ test('session#routes.login.callback nonce passed', (t) => {
     }
   };
 
-  server.inject(options, (response) => {
-    t.equal(response.headers['set-cookie'].length, 4);
-    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
-    t.equal(cookies[0], 'nonce=');
-    t.equal(cookies[1], 'state=');
-    t.end();
-  });
+  const response = await server.inject(options);
+  t.equal(response.headers['set-cookie'].length, 4);
+  const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
+  t.equal(cookies[0], 'nonce=');
+  t.equal(cookies[1], 'state=');
+  t.end();
 });
 
-test('session#routes.login.callback legacy nonce passed', (t) => {
+test('session#routes.login.callback legacy nonce passed', async (t) => {
   const token = { nonce: '123' };
   const options = {
     method: 'POST',
@@ -403,38 +436,36 @@ test('session#routes.login.callback legacy nonce passed', (t) => {
     }
   };
 
-  server.inject(options, (response) => {
-    t.equal(response.headers['set-cookie'].length, 4);
-    const cookies = response.headers['set-cookie'].map(c => parseCookie(c));
-    t.equal(cookies[0].nonce, '');
-    t.equal(cookies[0].SameSite, 'None');
-    t.equal(cookies[0].Secure, true);
-    t.equal(cookies[1].state, '');
-    t.equal(cookies[1].SameSite, 'None');
-    t.equal(cookies[1].Secure, true);
-    t.equal(cookies[2].nonce_compat, '');
-    t.false(cookies[2].SameSite);
-    t.false(cookies[2].Secure);
-    t.equal(cookies[3].state_compat, '');
-    t.false(cookies[3].SameSite);
-    t.false(cookies[3].Secure);
-    t.end();
-  });
+  const response = await server.inject(options);
+  t.equal(response.headers['set-cookie'].length, 4);
+  const cookies = response.headers['set-cookie'].map(c => parseCookie(c));
+  t.equal(cookies[0].nonce, '');
+  t.equal(cookies[0].SameSite, 'None');
+  t.equal(cookies[0].Secure, true);
+  t.equal(cookies[1].state, '');
+  t.equal(cookies[1].SameSite, 'None');
+  t.equal(cookies[1].Secure, true);
+  t.equal(cookies[2].nonce_compat, '');
+  t.false(cookies[2].SameSite);
+  t.false(cookies[2].Secure);
+  t.equal(cookies[3].state_compat, '');
+  t.false(cookies[3].SameSite);
+  t.false(cookies[3].Secure);
+  t.end();
 });
 
-test('session#routes.logout should clear cookies', (t) => {
+test('session#routes.logout should clear cookies', async (t) => {
   const options = {
     method: 'GET',
     url: '/logout'
   };
 
-  server.inject(options, (response) => {
-    t.equal(response.headers['set-cookie'].length, 4);
-    const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
-    t.equal(cookies[0], 'nonce=');
-    t.equal(cookies[1], 'state=');
-    t.equal(cookies[2], 'nonce_compat=');
-    t.equal(cookies[3], 'state_compat=');
-    t.end();
-  });
+  const response = await server.inject(options);
+  t.equal(response.headers['set-cookie'].length, 4);
+  const cookies = response.headers['set-cookie'].map(c => c.split(';')[0]);
+  t.equal(cookies[0], 'nonce=');
+  t.equal(cookies[1], 'state=');
+  t.equal(cookies[2], 'nonce_compat=');
+  t.equal(cookies[3], 'state_compat=');
+  t.end();
 });

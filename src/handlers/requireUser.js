@@ -1,5 +1,5 @@
 const tools = require('auth0-extension-tools');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 
 module.exports = {
   method: function(req, res) {

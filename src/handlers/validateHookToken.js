@@ -1,5 +1,5 @@
 const tools = require('auth0-extension-tools');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 
 module.exports = function(domain, webtaskUrl, extensionSecret) {
   if (domain === null || domain === undefined) {
@@ -44,13 +44,13 @@ module.exports = function(domain, webtaskUrl, extensionSecret) {
             if (tools.validateHookToken(domain, webtaskUrl, hookPath, extensionSecret, token)) {
               return res();
             }
-          } catch (e) {
-            return res(Boom.wrap(e, 401, e.message));
+          } catch (err) {
+            return res(Boom.boomify(err, { statusCode: 401, message: err.message }));
           }
         }
 
         const err = new tools.HookTokenError('Hook token missing for the call to: ' + hookPath);
-        return res(Boom.wrap(err, 401, err.message));
+        return res(Boom.boomify(err, { statusCode: 401, message: err.message }));
       }
     };
   };

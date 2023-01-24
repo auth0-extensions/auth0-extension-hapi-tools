@@ -1,7 +1,7 @@
 const url = require('url');
 
 const getBasePath = function(originalUrl, path) {
-  var basePath = url.parse(originalUrl).pathname || '';
+  let basePath = url.parse(originalUrl).pathname || '';
   basePath = basePath.replace(path, '')
     .replace(/^\/|\/$/g, '');
   if (!basePath.startsWith('/')) {
@@ -38,8 +38,8 @@ function createRouteNormalizationRx(claims) {
 
   const container = claims.container.replace(SANITIZE_RX, '\\$&');
   const name = claims.jtn
-      ? claims.jtn.replace(SANITIZE_RX, '\\$&')
-      : '';
+    ? claims.jtn.replace(SANITIZE_RX, '\\$&')
+    : '';
 
   if (claims.url_format === USE_SHARED_DOMAIN) {
     return new RegExp('^\/api/run/' + container + '/(?:' + name + '\/?)?');
@@ -70,7 +70,7 @@ module.exports.getWebtaskUrl = function(req) {
   const requestPath = url.parse(requestUrl || '').pathname;
 
   const originalUrl = url.parse(requestOriginalUrl || '').pathname || '';
-  var webtaskUrl = url.format({
+  let webtaskUrl = url.format({
     protocol: 'https',
     host: req.headers.host,
     pathname: originalUrl.replace(requestPath, '').replace(/\/$/g, '')

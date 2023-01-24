@@ -1,5 +1,5 @@
 const tools = require('auth0-extension-tools');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 
 module.exports = function(handlerOptions) {
   if (!handlerOptions || typeof handlerOptions !== 'object') {
@@ -27,7 +27,7 @@ module.exports = function(handlerOptions) {
             handlerOptions.logger(err.message || err.code);
           }
 
-          res(Boom.wrap(err));
+          res(Boom.boomify(err));
         });
     },
     assign: 'auth0'
